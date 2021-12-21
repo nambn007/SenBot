@@ -1,6 +1,6 @@
 import os
 import webbrowser
-
+from pyvi import ViTokenizer
 
 class Action:
     OPEN = 1
@@ -11,7 +11,9 @@ class Action:
         "mở": OPEN,
         "tìm kiếm": SEARCH,
         "mo": OPEN,
-        "tim kiem": SEARCH
+        "tim kiem": SEARCH,
+        "tìm_kiếm": SEARCH,
+        "tim_kiem": SEARCH
     }
 
 
@@ -42,7 +44,7 @@ class OBJECT:
 class Assistant:
     def __init__(self):
 
-        self.action = Action.SEARCH
+        self.action = None
         self.object = None
         self.text = None
 
@@ -53,7 +55,8 @@ class Assistant:
     def preprocessing_text_action(self, text):
         if text:
             if len(text) > 0:
-                words = text.lower().split()
+                words = ViTokenizer.tokenize(text.lower())
+
                 action = None
                 for act in list(Action.map_text_to_action.keys()):
                     if act in words:
@@ -65,7 +68,7 @@ class Assistant:
                     if obj in words:
                         ob = OBJECT.map_text_obj_to_obj[obj]
 
-                if action is not None and ob is not None:
+                if action is not None:
                     return action, ob
         return None
 
@@ -83,23 +86,28 @@ class Assistant:
 
     def get_link(self):
         link = None
+
         if self.action == Action.OPEN:
             link = OBJECT.map_obj_to_link[self.object]
         elif self.action == Action.SEARCH:
             # Search in here
             if self.text is not None:
-                link = 'https://www.google.com/search?q=' + self.text
+                try:
+                    text_search = self.text[self.text.find("tôi")+3:]
+                    link = 'https://www.google.com/search?q=' + text_search
+                    print('Tim kiem cho toi', text_search)
+                except Exception as e:
+                    link = None
         return link
 
     @staticmethod
     def open_browser(link):
-        print(link)
         if link:
             webbrowser.open(link)
-        return "Don't know you question"
+        print("Don't know you question")
 
 
 if __name__ == '__main__':
     bot = Assistant()
     bot.do_action('mở facebook')
-    # bot.do_action("Ai là người đặt tên cho dòng sông")
+    # bot.do_action("tìm kiếm cho tôi Bac Ho sinh nam bao nhieu")
